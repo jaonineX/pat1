@@ -23,8 +23,9 @@ st.write(df.head(10))
 # =========================
 target_col = "Risk_Level_Num"
 
-# ลบคอลัมน์ที่ไม่จำเป็น
-X = df.drop(columns=[target_col, "Patient_ID", "Risk_Level"])
+# ลบคอลัมน์ที่ไม่จำเป็น (ถ้ามี)
+drop_cols = [target_col, "Patient_ID", "Risk_Level"]
+X = df.drop(columns=[c for c in drop_cols if c in df.columns], errors="ignore")
 y = df[target_col]
 
 # =========================
@@ -46,7 +47,7 @@ dtree = ModelDtree.fit(x_train, y_train)
 st.subheader("กรุณาป้อนข้อมูลเพื่อพยากรณ์")
 input_data = {}
 for col in X.columns:
-    # ถ้าเป็นตัวเลข int ให้ default เป็น int
+    # ถ้าเป็น int ให้ default เป็น int
     if df[col].dtype == "int64":
         input_data[col] = st.number_input(f"Insert {col}", value=0)
     else:
@@ -78,4 +79,3 @@ tree.plot_tree(
     ax=ax
 )
 st.pyplot(fig)
-
