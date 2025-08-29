@@ -7,7 +7,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 
 # โหลดข้อมูล
-st.header("Decision Tree for classification")
+st.header("Decision Tree for classification0000")
 
 # ใช้ไฟล์ที่อัปโหลดมาแทน iris.csv
 df = pd.read_csv("./data/Health_Risk_Dataset_Encoded.csv")
