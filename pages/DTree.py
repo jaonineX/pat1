@@ -10,7 +10,7 @@ from sklearn.preprocessing import LabelEncoder
 # โหลดข้อมูล
 st.header("Decision Tree for classification")
 
-df = pd.read_csv("Health_Risk_Dataset_Encoded.csv")
+df = pd.read_csv("data/Health_Risk_Dataset_Encoded.csv")
 st.write("แสดงข้อมูลตัวอย่าง:")
 st.write(df.head(10))
 
