@@ -10,7 +10,6 @@ import numpy as np
 st.title("ระบบพยากรณ์โรคหัวใจด้วยโมเดล KNN")
 
 # แทนที่การโหลดรูปภาพจาก local file ด้วย URL
-# 
 st.image("https://images.unsplash.com/photo-1627916694602-0a187b92f41f?q=80&w=1740&auto=format&fit=crop", caption="A healthy heart", use_column_width=True)
 
 # โหลดข้อมูล
@@ -24,7 +23,6 @@ except FileNotFoundError:
 df.dropna(inplace=True)
 
 # กำหนดคอลัมน์เป้าหมาย
-# จากไฟล์ที่ให้มา คอลัมน์ที่เกี่ยวข้องกับความเสี่ยงคือ 'Risk_Level_Num'
 target_col = 'Risk_Level_Num'
 
 # แยก Features และ Target
