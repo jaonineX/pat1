@@ -10,13 +10,16 @@ from sklearn.preprocessing import LabelEncoder
 # โหลดข้อมูล
 st.header("Decision Tree for classification")
 
-# แก้ไข path และชื่อไฟล์ให้ถูกต้อง
+# อ่านไฟล์ CSV
 df = pd.read_csv("data/Health_Risk_Dataset_Encoded.csv")
 st.write("แสดงข้อมูลตัวอย่าง:")
 st.write(df.head(10))
 
 # กำหนด target column โดยใช้ชื่อที่ถูกต้องจากไฟล์
 target_col = "Risk_Level_Num"
+
+# ลบแถวที่มีค่าว่างออกทั้งหมด
+df.dropna(inplace=True)
 
 # แยก Features และ Target
 X = df.drop(target_col, axis=1)
