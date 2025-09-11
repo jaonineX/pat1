@@ -15,7 +15,7 @@ st.write("แสดงข้อมูลตัวอย่าง:")
 st.write(df.head(10))
 
 # กำหนด target column
-target_col = "Risk_Level"
+target_col = "RiskLevel"
 
 # แยก Features และ Target
 X = df.drop(target_col, axis=1)
