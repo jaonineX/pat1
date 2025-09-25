@@ -27,9 +27,9 @@ try:
     st.dataframe(dt.head(10))
 except FileNotFoundError:
     st.error("❌ *ไม่พบไฟล์ 'Health_Risk_Dataset_Encoded.csv'* กรุณาตรวจสอบว่าไฟล์อยู่ในโฟลเดอร์เดียวกันกับโค้ด")
-    st.stop() # Stop the app if file is not found
+    st.stop()
 
-# Clean data by dropping any rows with missing values for simplicity
+# Clean data by dropping any rows with missing values
 dt.dropna(inplace=True)
 
 # --- Visualization Section ---
@@ -37,21 +37,24 @@ st.markdown("---")
 st.subheader("📈 การสำรวจข้อมูล (Data Exploration)")
 st.info("ใช้กราฟด้านล่างเพื่อดูการกระจายของข้อมูลแต่ละฟีเจอร์")
 
-# Drop 'Patient_ID' as it's not a feature for analysis
-dt_features = dt.drop(columns=['Patient_ID', 'Risk_Level_Num'])
-feature = st.selectbox(
+# Select only numerical features and the target for visualization
+numerical_features = dt.select_dtypes(include=np.number).columns.tolist()
+# Exclude Patient_ID and the target variable from the list of selectable features
+features_for_plot = [col for col in numerical_features if col not in ['Patient_ID', 'Risk_Level_Num']]
+
+feature_to_plot = st.selectbox(
     "เลือกฟีเจอร์เพื่อดูการกระจายข้อมูล", 
-    dt_features.columns,
+    features_for_plot,
     help="เลือกฟีเจอร์เพื่อดูว่าค่าของฟีเจอร์นั้นๆ มีการกระจายตัวอย่างไรเมื่อเทียบกับผลลัพธ์ (Risk_Level_Num)"
 )
 
 # Boxplot
-st.write(f"#### 🎯 Boxplot: แสดงการกระจายของฟีเจอร์ '{feature}'")
+st.write(f"#### 🎯 Boxplot: แสดงการกระจายของฟีเจอร์ '{feature_to_plot}'")
 fig, ax = plt.subplots(figsize=(8, 6))
-sns.boxplot(data=dt, x='Risk_Level_Num', y=feature, ax=ax)
-ax.set_title(f'Boxplot ของ {feature} เทียบกับ Risk Level', fontsize=16)
+sns.boxplot(data=dt, x='Risk_Level_Num', y=feature_to_plot, ax=ax)
+ax.set_title(f'Boxplot ของ {feature_to_plot} เทียบกับ Risk Level', fontsize=16)
 ax.set_xlabel('Risk Level (0: ต่ำ, 1: ปานกลาง, 2: สูง)', fontsize=12)
-ax.set_ylabel(feature, fontsize=12)
+ax.set_ylabel(feature_to_plot, fontsize=12)
 st.pyplot(fig)
 
 # --- Prediction Section ---
@@ -88,4 +91,48 @@ for i, feature in enumerate(input_features):
                 options=list(consciousness_options.keys()),
                 key=f"input_{feature}"
             )
-            # Encode 'A' to
+            user_input[feature] = 1 if selected_consciousness == 'P' else 0
+        elif feature == 'On_Oxygen':
+            oxygen_options = {'ใช่': 1, 'ไม่ใช่': 0}
+            selected_oxygen = st.selectbox(
+                f'กรุณาเลือก: *{label_text}*',
+                options=list(oxygen_options.keys()),
+                key=f"input_{feature}"
+            )
+            user_input[feature] = oxygen_options[selected_oxygen]
+        else:
+            value = st.number_input(
+                f'กรุณาป้อนค่าสำหรับ: *{label_text}*', 
+                key=f"input_{feature}",
+                step=1
+            )
+            user_input[feature] = value
+
+# Prediction button and result display
+st.markdown("---")
+if st.button("🌟 ทำนายผล", type="primary"):
+    # Define features and target for training
+    X = dt.drop(columns=['Patient_ID', 'Risk_Level_Num'])
+    y = dt['Risk_Level_Num']
+
+    Knn_model = KNeighborsClassifier(n_neighbors=3)
+    Knn_model.fit(X, y)
+    
+    # Ensure the input array has the same feature order as the training data
+    x_input = np.array([[user_input[feature] for feature in X.columns]])
+
+    prediction = Knn_model.predict(x_input)
+    st.subheader("✅ ผลการทำนาย:")
+    
+    risk_level_map = {0: 'ความเสี่ยงต่ำ', 1: 'ความเสี่ยงปานกลาง', 2: 'ความเสี่ยงสูง'}
+    predicted_risk = risk_level_map.get(prediction[0], 'ไม่สามารถระบุได้')
+
+    if prediction[0] == 2:
+        st.error(f'⚠️ *คุณมีความเสี่ยงในระดับ: {predicted_risk}*')
+        st.markdown("ขอแนะนำให้ปรึกษาแพทย์ผู้เชี่ยวชาญเพื่อยืนยันผลและรับคำแนะนำที่ถูกต้อง")
+    elif prediction[0] == 1:
+        st.warning(f'🟡 *คุณมีความเสี่ยงในระดับ: {predicted_risk}*')
+        st.markdown("ควรเฝ้าระวังและดูแลสุขภาพอย่างใกล้ชิด")
+    else:
+        st.success(f'🟢 *คุณมีความเสี่ยงในระดับ: {predicted_risk}*')
+        st.markdown("อย่างไรก็ตาม การดูแลสุขภาพอย่างสม่ำเสมอเป็นสิ่งสำคัญ")
