@@ -84,13 +84,16 @@ if uploaded_file is not None:
         df.dropna(subset=[target_column], inplace=True)
         df[target_column] = df[target_column].astype(int)
 
-        # --- Model Training ---
+        # กำหนดคุณสมบัติ
         features = [
             'Respiratory_Rate', 'Oxygen_Saturation', 'O2_Scale',
             'Systolic_BP', 'Heart_Rate', 'Temperature',
             'Consciousness', 'On_Oxygen'
         ]
         
+        # ลบแถวที่มีค่าว่าง (NaN) ในคอลัมน์คุณสมบัติ
+        df.dropna(subset=features, inplace=True)
+
         missing_cols = [col for col in features + [target_column] if col not in df.columns]
         if missing_cols:
             st.error(f"❌ *เกิดข้อผิดพลาด: ไม่พบคอลัมน์ที่จำเป็น:* {', '.join(missing_cols)}")
