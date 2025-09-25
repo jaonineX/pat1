@@ -37,9 +37,14 @@ if uploaded_file is not None:
         # --- การแก้ไขข้อผิดพลาด: แปลงข้อมูลจากตัวอักษรเป็นตัวเลข ---
         # แปลงคอลัมน์ 'Consciousness' จาก 'A' และ 'P' เป็นตัวเลข 0 และ 1
         df['Consciousness'] = df['Consciousness'].map({'A': 0, 'P': 1})
+        
+        # --- แก้ไขปัญหา: ลบแถวที่มีค่าว่าง (NaN) ในคอลัมน์เป้าหมาย ---
+        target_column = 'Risk_Level_Num'
+        df.dropna(subset=[target_column], inplace=True)
+        # แปลงคอลัมน์เป้าหมายเป็นประเภทข้อมูลที่เหมาะสม
+        df[target_column] = df[target_column].astype(int)
 
         # --- การเตรียมข้อมูล ---
-        target_column = 'Risk_Level_Num'
         features = [
             'Respiratory_Rate', 'Oxygen_Saturation', 'O2_Scale',
             'Systolic_BP', 'Heart_Rate', 'Temperature',
