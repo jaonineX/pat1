@@ -5,91 +5,132 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-st.title('การทำนายข้อมูลโรคหัวใจด้วยเทคนิค K-Nearest Neighbor')
-#st.image("./img/kairung.jpg")
-col1, col2 = st.columns(2)
+st.set_page_config(
+    page_title="การทำนายความเสี่ยงสุขภาพ",
+    page_icon="❤️",
+    layout="wide"
+)
 
-with col1:
-   st.header("")
-   st.image("./img/heart1.jpg")
+# --- Header Section ---
+st.title("❤️ การทำนายความเสี่ยงสุขภาพด้วยเทคนิค K-Nearest Neighbor")
+st.markdown("""
+แอปพลิเคชันนี้ใช้โมเดล *K-Nearest Neighbor (KNN)* เพื่อทำนายความเสี่ยงด้านสุขภาพจากข้อมูลของคุณ
+""")
+st.markdown("---")
 
-with col2:
-   st.header("")
-   st.image("./img/heart2.jpg")
+# --- Data Information Section ---
+st.subheader("📊 ข้อมูลที่ใช้ในการฝึกโมเดล")
+st.info("โปรดตรวจสอบข้อมูลเพื่อทำความเข้าใจลักษณะของชุดข้อมูล")
+try:
+    dt = pd.read_csv("Health_Risk_Dataset_Encoded.csv")
+    st.write("แสดงข้อมูล 10 แถวแรก:")
+    st.dataframe(dt.head(10))
+except FileNotFoundError:
+    st.error("❌ *ไม่พบไฟล์ 'Health_Risk_Dataset_Encoded.csv'* กรุณาตรวจสอบว่าไฟล์อยู่ในโฟลเดอร์เดียวกันกับโค้ด")
+    st.stop() # Stop the app if file is not found
 
+# Clean data by dropping any rows with missing values for simplicity
+dt.dropna(inplace=True)
 
-html_7 = """
-<div style="background-color:#33beff;padding:15px;border-radius:15px 15px 15px 15px;border-style:'solid';border-color:black">
-<center><h4>ข้อมูลโรคหัวใจสำหรับทำนาย</h4></center>
-</div>
-"""
-st.markdown(html_7, unsafe_allow_html=True)
-st.markdown("")
-st.markdown("")
+# --- Visualization Section ---
+st.markdown("---")
+st.subheader("📈 การสำรวจข้อมูล (Data Exploration)")
+st.info("ใช้กราฟด้านล่างเพื่อดูการกระจายของข้อมูลแต่ละฟีเจอร์")
 
-st.subheader("ข้อมูลส่วนแรก 10 แถว")
-dt = pd.read_csv("./data/Heart3.csv")
-st.write(dt.head(10))
-st.subheader("ข้อมูลส่วนสุดท้าย 10 แถว")
-st.write(dt.tail(10))
+# Drop 'Patient_ID' as it's not a feature for analysis
+dt_features = dt.drop(columns=['Patient_ID', 'Risk_Level_Num'])
+feature = st.selectbox(
+    "เลือกฟีเจอร์เพื่อดูการกระจายข้อมูล", 
+    dt_features.columns,
+    help="เลือกฟีเจอร์เพื่อดูว่าค่าของฟีเจอร์นั้นๆ มีการกระจายตัวอย่างไรเมื่อเทียบกับผลลัพธ์ (Risk_Level_Num)"
+)
 
-# สถิติพื้นฐาน
-st.subheader("📈 สถิติพื้นฐานของข้อมูล")
-st.write(dt.describe())
-
-# การเลือกแสดงกราฟตามฟีเจอร์
-st.subheader("📌 เลือกฟีเจอร์เพื่อดูการกระจายข้อมูล")
-feature = st.selectbox("เลือกฟีเจอร์", dt.columns[:-1])
-
-# วาดกราฟ boxplot
-st.write(f"### 🎯 Boxplot: {feature} แยกตามชนิดของโรคหัวใจ")
-fig, ax = plt.subplots()
-sns.boxplot(data=dt, x='HeartDisease', y=feature, ax=ax)
+# Boxplot
+st.write(f"#### 🎯 Boxplot: แสดงการกระจายของฟีเจอร์ '{feature}'")
+fig, ax = plt.subplots(figsize=(8, 6))
+sns.boxplot(data=dt, x='Risk_Level_Num', y=feature, ax=ax)
+ax.set_title(f'Boxplot ของ {feature} เทียบกับ Risk Level', fontsize=16)
+ax.set_xlabel('Risk Level (0: ต่ำ, 1: ปานกลาง, 2: สูง)', fontsize=12)
+ax.set_ylabel(feature, fontsize=12)
 st.pyplot(fig)
 
-# วาด pairplot
-if st.checkbox("แสดง Pairplot (ใช้เวลาประมวลผลเล็กน้อย)"):
-    st.write("### 🌺 Pairplot: การกระจายของข้อมูลทั้งหมด")
-    fig2 = sns.pairplot(dt, hue='HeartDisease')
-    st.pyplot(fig2)
+# --- Prediction Section ---
+st.markdown("---")
+st.header("🔮 ทำนายผลความเสี่ยงสุขภาพ")
+st.info("กรุณาป้อนข้อมูลของคุณในช่องด้านล่างเพื่อรับการทำนาย")
 
-html_8 = """
-<div style="background-color:#6BD5DA;padding:15px;border-radius:15px 15px 15px 15px;border-style:'solid';border-color:black">
-<center><h5>ทำนายข้อมูล</h5></center>
-</div>
-"""
-st.markdown(html_8, unsafe_allow_html=True)
-st.markdown("")
+# Dictionary for mapping English column names to Thai labels
+feature_labels = {
+    'Respiratory_Rate': 'อัตราการหายใจ (ครั้ง/นาที)', 
+    'Oxygen_Saturation': 'ความอิ่มตัวของออกซิเจน (%)', 
+    'O2_Scale': 'ระดับออกซิเจน',
+    'Systolic_BP': 'ความดันโลหิตตัวบน (mmHg)', 
+    'Heart_Rate': 'อัตราการเต้นของหัวใจ (ครั้ง/นาที)',
+    'Temperature': 'อุณหภูมิร่างกาย (เซลเซียส)',
+    'Consciousness': 'ระดับการรับรู้', 
+    'On_Oxygen': 'ใช้เครื่องช่วยหายใจ (ออกซิเจน)',
+}
 
-A1 = st.number_input("กรุณาเลือกข้อมูล A1")
-A2 = st.number_input("กรุณาเลือกข้อมูล A2")
-A3 = st.number_input("กรุณาเลือกข้อมูล A3")
-A4 = st.number_input("กรุณาเลือกข้อมูล A4")
-A5 = st.number_input("กรุณาเลือกข้อมูล A5")
-A6 = st.number_input("กรุณาเลือกข้อมูล A6")
-A7 = st.number_input("กรุณาเลือกข้อมูล A7")
-A8 = st.number_input("กรุณาเลือกข้อมูล A8")
-A9 = st.number_input("กรุณาเลือกข้อมูล A9")
-A10 = st.number_input("กรุณาเลือกข้อมูล A10")
-A11 = st.number_input("กรุณาเลือกข้อมูล A11")
+# Define the features for prediction, excluding Patient_ID and the target
+input_features = ['Respiratory_Rate', 'Oxygen_Saturation', 'O2_Scale', 'Systolic_BP', 'Heart_Rate', 'Temperature', 'Consciousness', 'On_Oxygen']
 
-if st.button("ทำนายผล"):
-   #st.write("ทำนาย")
-   #dt = pd.read_csv("./data/iris-3.csv") 
-   X = dt.drop('HeartDisease', axis=1)
-   y = dt.HeartDisease
+# Create input fields using columns for better layout
+user_input = {}
+cols = st.columns(2)
 
-   Knn_model = KNeighborsClassifier(n_neighbors=3)
-   Knn_model.fit(X, y)  
+for i, feature in enumerate(input_features):
+    with cols[i % 2]:
+        label_text = feature_labels.get(feature, feature)
+        if feature == 'Consciousness':
+            consciousness_options = {'A': 'A', 'P': 'P'}
+            selected_consciousness = st.selectbox(
+                f'กรุณาเลือกระดับ: *{label_text}*',
+                options=list(consciousness_options.keys()),
+                key=f"input_{feature}"
+            )
+            # Encode 'A' to 0 and 'P' to 1 for the model
+            user_input[feature] = 1 if selected_consciousness == 'P' else 0
+        elif feature == 'On_Oxygen':
+            oxygen_options = {'ใช่': 1, 'ไม่ใช่': 0}
+            selected_oxygen = st.selectbox(
+                f'กรุณาเลือก: *{label_text}*',
+                options=list(oxygen_options.keys()),
+                key=f"input_{feature}"
+            )
+            user_input[feature] = oxygen_options[selected_oxygen]
+        else:
+            value = st.number_input(
+                f'กรุณาป้อนค่าสำหรับ: *{label_text}*', 
+                key=f"input_{feature}",
+                step=1
+            )
+            user_input[feature] = value
+
+# Prediction button and result display
+st.markdown("---")
+if st.button("🌟 ทำนายผล", type="primary"):
+    # Drop 'Patient_ID' since it's an identifier, not a feature
+    X = dt.drop(columns=['Patient_ID', 'Risk_Level_Num'])
+    y = dt['Risk_Level_Num']
+
+    Knn_model = KNeighborsClassifier(n_neighbors=3)
+    Knn_model.fit(X, y)
     
-   x_input = np.array([[A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11]])
-   st.write(Knn_model.predict(x_input))
-   
-   out=Knn_model.predict(x_input)
+    # Create the input array using the same column order as the training data
+    x_input = np.array([[user_input[feature] for feature in X.columns]])
 
-   if out[0] == 1:
-    st.image("./img/heart1.jpg")
-   else:
-    st.image("./img/heart2.jpg")
-else:
-    st.write("ไม่ทำนาย")
+    prediction = Knn_model.predict(x_input)
+    st.subheader("✅ ผลการทำนาย:")
+    
+    risk_level_map = {0: 'ความเสี่ยงต่ำ', 1: 'ความเสี่ยงปานกลาง', 2: 'ความเสี่ยงสูง'}
+    predicted_risk = risk_level_map.get(prediction[0], 'ไม่สามารถระบุได้')
+
+    if prediction[0] == 2:
+        st.error(f'⚠️ *คุณมีความเสี่ยงในระดับ: {predicted_risk}*')
+        st.markdown("ขอแนะนำให้ปรึกษาแพทย์ผู้เชี่ยวชาญเพื่อยืนยันผลและรับคำแนะนำที่ถูกต้อง")
+    elif prediction[0] == 1:
+        st.warning(f'🟡 *คุณมีความเสี่ยงในระดับ: {predicted_risk}*')
+        st.markdown("ควรเฝ้าระวังและดูแลสุขภาพอย่างใกล้ชิด")
+    else:
+        st.success(f'🟢 *คุณมีความเสี่ยงในระดับ: {predicted_risk}*')
+        st.markdown("อย่างไรก็ตาม การดูแลสุขภาพอย่างสม่ำเสมอเป็นสิ่งสำคัญ")
