@@ -12,7 +12,7 @@ st.set_page_config(
 )
 
 # --- Header Section ---
-st.title("❤️ การทำนายความเสี่ยงสุขภาพด้วยเทคนิค K-Nearest Neighbor")
+st.title("❤️ การทำนายความเสี่ยงสุขภาพด้วย K-Nearest Neighbor")
 st.markdown("""
 แอปพลิเคชันนี้ใช้โมเดล *K-Nearest Neighbor (KNN)* เพื่อทำนายความเสี่ยงด้านสุขภาพจากข้อมูลของคุณ
 """)
@@ -88,49 +88,4 @@ for i, feature in enumerate(input_features):
                 options=list(consciousness_options.keys()),
                 key=f"input_{feature}"
             )
-            # Encode 'A' to 0 and 'P' to 1 for the model
-            user_input[feature] = 1 if selected_consciousness == 'P' else 0
-        elif feature == 'On_Oxygen':
-            oxygen_options = {'ใช่': 1, 'ไม่ใช่': 0}
-            selected_oxygen = st.selectbox(
-                f'กรุณาเลือก: *{label_text}*',
-                options=list(oxygen_options.keys()),
-                key=f"input_{feature}"
-            )
-            user_input[feature] = oxygen_options[selected_oxygen]
-        else:
-            value = st.number_input(
-                f'กรุณาป้อนค่าสำหรับ: *{label_text}*', 
-                key=f"input_{feature}",
-                step=1
-            )
-            user_input[feature] = value
-
-# Prediction button and result display
-st.markdown("---")
-if st.button("🌟 ทำนายผล", type="primary"):
-    # Drop 'Patient_ID' since it's an identifier, not a feature
-    X = dt.drop(columns=['Patient_ID', 'Risk_Level_Num'])
-    y = dt['Risk_Level_Num']
-
-    Knn_model = KNeighborsClassifier(n_neighbors=3)
-    Knn_model.fit(X, y)
-    
-    # Create the input array using the same column order as the training data
-    x_input = np.array([[user_input[feature] for feature in X.columns]])
-
-    prediction = Knn_model.predict(x_input)
-    st.subheader("✅ ผลการทำนาย:")
-    
-    risk_level_map = {0: 'ความเสี่ยงต่ำ', 1: 'ความเสี่ยงปานกลาง', 2: 'ความเสี่ยงสูง'}
-    predicted_risk = risk_level_map.get(prediction[0], 'ไม่สามารถระบุได้')
-
-    if prediction[0] == 2:
-        st.error(f'⚠️ *คุณมีความเสี่ยงในระดับ: {predicted_risk}*')
-        st.markdown("ขอแนะนำให้ปรึกษาแพทย์ผู้เชี่ยวชาญเพื่อยืนยันผลและรับคำแนะนำที่ถูกต้อง")
-    elif prediction[0] == 1:
-        st.warning(f'🟡 *คุณมีความเสี่ยงในระดับ: {predicted_risk}*')
-        st.markdown("ควรเฝ้าระวังและดูแลสุขภาพอย่างใกล้ชิด")
-    else:
-        st.success(f'🟢 *คุณมีความเสี่ยงในระดับ: {predicted_risk}*')
-        st.markdown("อย่างไรก็ตาม การดูแลสุขภาพอย่างสม่ำเสมอเป็นสิ่งสำคัญ")
+            # Encode 'A' to
