@@ -33,6 +33,10 @@ if uploaded_file is not None:
         st.info("✅ โหลดข้อมูลจากไฟล์ที่อัปโหลดเรียบร้อยแล้ว")
         st.write("ตัวอย่าง 10 แถวแรกของชุดข้อมูล:")
         st.dataframe(df.head(10))
+        
+        # --- การแก้ไขข้อผิดพลาด: แปลงข้อมูลจากตัวอักษรเป็นตัวเลข ---
+        # แปลงคอลัมน์ 'Consciousness' จาก 'A' และ 'P' เป็นตัวเลข 0 และ 1
+        df['Consciousness'] = df['Consciousness'].map({'A': 0, 'P': 1})
 
         # --- การเตรียมข้อมูล ---
         target_column = 'Risk_Level_Num'
