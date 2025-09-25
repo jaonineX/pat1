@@ -80,12 +80,10 @@ if uploaded_file is not None:
             with col2:
                 user_input['Heart_Rate'] = st.number_input(f'ป้อนค่าสำหรับ: {feature_labels["Heart_Rate"]}', min_value=0, value=80, step=1)
                 user_input['Temperature'] = st.number_input(f'ป้อนค่าสำหรับ: {feature_labels["Temperature"]}', min_value=0.0, value=37.0, step=0.1)
-                consciousness_options = {'ตื่นตัว (A)': 'A', 'บกพร่อง (P)': 'P'}
-                selected_consciousness = st.selectbox(f'ป้อนค่าสำหรับ: {feature_labels["Consciousness"]}', options=list(consciousness_options.keys()))
+                selected_consciousness = st.radio(f'ป้อนค่าสำหรับ: {feature_labels["Consciousness"]}', options=['ตื่นตัว (A)', 'บกพร่อง (P)'])
                 user_input['Consciousness'] = 1 if selected_consciousness == 'บกพร่อง (P)' else 0
-                on_oxygen_options = {'ไม่ได้รับ': 0, 'ได้รับ': 1}
-                selected_on_oxygen = st.selectbox(f'ป้อนค่าสำหรับ: {feature_labels["On_Oxygen"]}', options=list(on_oxygen_options.keys()))
-                user_input['On_Oxygen'] = on_oxygen_options[selected_on_oxygen]
+                selected_on_oxygen = st.radio(f'ป้อนค่าสำหรับ: {feature_labels["On_Oxygen"]}', options=['ไม่ได้รับ', 'ได้รับ'])
+                user_input['On_Oxygen'] = 1 if selected_on_oxygen == 'ได้รับ' else 0
 
             if st.button("พยากรณ์ผล", type="primary"):
                 x_input = [[user_input[feature] for feature in features]]
